@@ -17,42 +17,44 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-signInWithPopup(auth, provider)
-  .then(async (result) => {
-    const user = result.user;
-    const uid = user.uid;
-    const userDoc = doc(db, "users", uid);
-    const userSnap = await getDoc(userDoc);
+document.getElementById("signInBtn").addEventListener("click", () => {
+  signInWithPopup(auth, provider)
+    .then(async (result) => {
+      const user = result.user;
+      const uid = user.uid;
+      const userDoc = doc(db, "users", uid);
+      const userSnap = await getDoc(userDoc);
 
-    if (!userSnap.exists()) {
-      const penName = prompt("Enter your Pen Name:");
-      const password = prompt("Enter site password:");
+      let penName = "";
+      if (!userSnap.exists()) {
+        penName = prompt("Enter your Pen Name:");
+        const password = prompt("Enter site password:");
 
-      if (password !== "ink") {
-        alert("❌ Incorrect password.");
-        return;
+        if (password !== "ink") {
+          alert("❌ Incorrect password.");
+          return;
+        }
+
+        await setDoc(userDoc, {
+          penName,
+          balance: 1000
+        });
+      } else {
+        const password = prompt("Enter site password:");
+        if (password !== "ink") {
+          alert("❌ Incorrect password.");
+          return;
+        }
+        penName = userSnap.data().penName;
       }
 
-      await setDoc(userDoc, {
-        penName,
-        balance: 1000
-      });
-
+      const data = (await getDoc(userDoc)).data();
+      document.getElementById("signInBtn").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
       document.getElementById("welcome").textContent = `Welcome ${penName}!`;
-      document.getElementById("balance").textContent = `Your Balance is $1000 InkCoins.`;
-    } else {
-      const password = prompt("Enter site password:");
-
-      if (password !== "ink") {
-        alert("❌ Incorrect password.");
-        return;
-      }
-
-      const data = userSnap.data();
-      document.getElementById("welcome").textContent = `Welcome ${data.penName}!`;
       document.getElementById("balance").textContent = `Your Balance is $${data.balance} InkCoins.`;
-    }
-  })
-  .catch((error) => {
-    console.error("Sign-in error:", error);
-  });
+    })
+    .catch((error) => {
+      console.error("Sign-in error:", error);
+    });
+});
